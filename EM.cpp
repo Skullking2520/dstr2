@@ -1,43 +1,60 @@
 #include "EM.h"
 #include <iostream>
+#include <ctime>
 
 using namespace std;
 
-// definition
-Email::Email(const string& sender, const string& subject, const string& body, 
-             const string& date, int priority) 
-    : sender(sender), subject(subject), body(body), date(date), priority(priority) {}
+// Constructor
+Email::Email(const string& sender, const string& recipient, const string& subject,
+             const string& body, const string& date)
+    : sender(sender), recipient(recipient), subject(subject), body(body), date(date) {}
 
-// Return Info in one string
-string Email::getInfo() const {
-    return "From: " + sender + "\n" +
-           "Subject: " + subject + "\n" +
-           "Date: " + date + "\n" +
-           "Priority: " + to_string(priority) + "\n" +
-           "Body: " + body;
+// Getters
+string Email::getSender() const {
+    return sender;
 }
 
-// Display Info
+string Email::getRecipient() const {
+    return recipient;
+}
+
+string Email::getSubject() const {
+    return subject;
+}
+
+string Email::getBody() const {
+    return body;
+}
+
+string Email::getDate() const {
+    return date;
+}
+
+// Display email details
 void Email::display() const {
-    cout << getInfo() << endl;
+    cout << "Date: " << date;
+    cout << "From: " << sender << "\n";
+    cout << "To: " << recipient << "\n";
+    cout << "Subject: " << subject << "\n";
+    cout << "Body: " << body << "\n";
+    cout << "--------------------------\n";
 }
 
-Email createEmail() {
-    string sender, subject, body, date;
-    int priority;
+// Function to create an email
+Email createEmail(const string& sender) {
+    string recipient, subject, body;
 
-    cout << "Enter sender: ";
-    getline(cin, sender);
+    cout << "Enter recipient: ";
+    getline(cin, recipient);
     cout << "Enter subject: ";
     getline(cin, subject);
     cout << "Enter body: ";
     getline(cin, body);
-    cout << "Enter date (e.g., 2024-10-27): ";
-    getline(cin, date);
-    cout << "Enter priority (1 = Low, 2 = Medium, 3 = High): ";
-    cin >> priority;
-    cin.ignore();  // Clear Entry buffer
 
-    // create and return Email
-    return Email(sender, subject, body, date, priority);
+    // Get current date and time
+    time_t now = time(0);
+    char* dt = ctime(&now);
+    string date(dt);
+
+    return Email(sender, recipient, subject, body, date);
 }
