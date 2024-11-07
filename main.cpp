@@ -1,5 +1,6 @@
 #include "UserManager.h"
 #include "EM.h"
+#include "filter.h" // Include the filter header
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -29,7 +30,7 @@ void displayUserMenu() {
 void logEmail(const string& filename, const Email& email) {
     ofstream file(filename, ios::app);
     if (file.is_open()) {
-        file << "Date: " << email.getDate();
+        file << "Date: " << email.getDate() << "\n"; // Added missing newline
         file << "From: " << email.getSender() << "\n";
         file << "To: " << email.getRecipient() << "\n";
         file << "Subject: " << email.getSubject() << "\n";
@@ -39,37 +40,6 @@ void logEmail(const string& filename, const Email& email) {
     } else {
         cerr << "Error: Unable to open log file.\n";
     }
-}
-
-// Function to perform spam filtering
-bool spamFilter(const Email& email) {
-    // Read spam keywords from file
-    ifstream file("spam_keywords.txt");
-    vector<string> spamKeywords;
-    if (file.is_open()) {
-        string keyword;
-        while (getline(file, keyword)) {
-            spamKeywords.push_back(keyword);
-        }
-        file.close();
-    } else {
-        cerr << "Error: Unable to open spam keywords file.\n";
-    }
-
-    // Convert email body to lowercase for case-insensitive comparison
-    string body = email.getBody();
-    transform(body.begin(), body.end(), body.begin(), ::tolower);
-
-    // Check if any spam keyword is present in the email body
-    for (const string& keyword : spamKeywords) {
-        if (body.find(keyword) != string::npos) {
-            cout << "Email detected as spam and will not be sent.\n";
-            return true; // Email is spam
-        }
-    }
-
-    // Currently, the spamKeywords vector is empty, so this will always return false
-    return false; // Email is not spam
 }
 
 int main() {
@@ -119,9 +89,10 @@ int main() {
                 if (!currentUser->getOutbox().isEmpty()) {
                     Email email = currentUser->getOutbox().sendEmail();
 
-                    // Spam filter check
+                    // Spam filter check using separate filter file
                     if (spamFilter(email)) {
                         // Email is spam; do not send
+                        cout << "Email detected as spam and will not be sent.\n";
                         continue;
                     }
 

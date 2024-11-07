@@ -101,7 +101,7 @@ void Outbox::saveToFile(const string& filename) const {
         Node* temp = front;
         while (temp != nullptr) {
             const Email& email = temp->email;
-            file << "Date: " << email.getDate();
+            file << "Date: " << email.getDate() << "\n";
             file << "From: " << email.getSender() << "\n";
             file << "To: " << email.getRecipient() << "\n";
             file << "Subject: " << email.getSubject() << "\n";
