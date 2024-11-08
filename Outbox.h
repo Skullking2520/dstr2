@@ -9,13 +9,13 @@ public:
     Outbox();
     ~Outbox();
 
-    // Add email to outbox (enqueue)
+    // Add email to outbox
     void addEmail(const Email& email);
 
-    // Send the next email (dequeue)
+    // Send the next email
     Email sendEmail();
 
-    // Show the next email without sending
+    // Show the next email
     void showNextEmail() const;
 
     // Show all emails in outbox
@@ -30,6 +30,9 @@ public:
     // Save emails to file
     void saveToFile(const std::string& filename) const;
 
+    // Clear the outbox
+    void clear();
+
 private:
     struct Node {
         Email email;
@@ -37,11 +40,8 @@ private:
         Node(const Email& email) : email(email), next(nullptr) {}
     };
 
-    Node* front; // Front of the queue
-    Node* rear;  // Rear of the queue
-
-    // Helper function to clear the queue
-    void clear();
+    Node* front;
+    Node* rear;
 };
 
 #endif

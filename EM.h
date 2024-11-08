@@ -4,7 +4,6 @@
 #include <string>
 
 // Email class definition
-
 class Email {
 public:
     // Constructor

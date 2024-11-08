@@ -3,7 +3,7 @@
 
 #include "EM.h"
 
-// Function to perform spam filtering (currently an empty structure)
+// Function to perform spam filtering
 bool spamFilter(const Email& email);
 
 #endif

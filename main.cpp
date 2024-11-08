@@ -3,9 +3,11 @@
 #include "filter.h" // Include the filter header
 #include <iostream>
 #include <fstream>
+#include <ctime>
 
 using namespace std;
 
+// Function to display the main menu
 void displayMainMenu() {
     cout << "\n==== Email Management System ====\n";
     cout << "1. Sign Up\n";
@@ -14,21 +16,44 @@ void displayMainMenu() {
     cout << "Choose an option: ";
 }
 
+// Function to display the user menu
 void displayUserMenu() {
     cout << "\n==== User Menu ====\n";
     cout << "1. Write Email\n";
     cout << "2. Send Next Email\n";
     cout << "3. View Inbox\n";
     cout << "4. View Outbox\n";
+    // Uncomment the following line if you implement the search function
+    // cout << "5. Search Inbox\n";
     cout << "5. Log Out\n";
     cout << "Choose an option: ";
 }
 
-// Function to log email to file
+// Function to get the current timestamp
+string getCurrentTimestamp() {
+    time_t now = time(0);
+    tm* localtm = localtime(&now);
+    char timestamp[80];
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", localtm);
+    return string(timestamp);
+}
+
+// Function to log actions to a log file
+void logAction(const string& filename, const string& action) {
+    ofstream file(filename, ios::app);
+    if (file.is_open()) {
+        file << "[" << getCurrentTimestamp() << "] " << action << "\n";
+        file.close();
+    } else {
+        cerr << "Error: Unable to open log file.\n";
+    }
+}
+
+// Function to log email to a file
 void logEmail(const string& filename, const Email& email) {
     ofstream file(filename, ios::app);
     if (file.is_open()) {
-        file << "Date: " << email.getDate() << "\n"; // Added missing newline
+        file << "Date: " << email.getDate() << "\n";
         file << "From: " << email.getSender() << "\n";
         file << "To: " << email.getRecipient() << "\n";
         file << "Subject: " << email.getSubject() << "\n";
@@ -36,7 +61,7 @@ void logEmail(const string& filename, const Email& email) {
         file << "--------------------------\n";
         file.close();
     } else {
-        cerr << "Error: Unable to open log file.\n";
+        cerr << "Error: Unable to open email log file.\n";
     }
 }
 
@@ -82,15 +107,19 @@ int main() {
                 // Write email and add to outbox
                 Email email = createEmail(currentEmail);
                 currentUser->getOutbox().addEmail(email);
+                logAction("action_log.txt", "Email drafted by " + currentEmail);
             } else if (choice == 2) {
                 // Send next email in outbox
                 if (!currentUser->getOutbox().isEmpty()) {
                     Email email = currentUser->getOutbox().sendEmail();
 
                     // Spam filter check using separate filter file
-                    if (spamFilter(email)) {
+                    bool isSpam = spamFilter(email);
+
+                    if (isSpam) {
                         // Email is spam; do not send
                         cout << "Email detected as spam and will not be sent.\n";
+                        logAction("action_log.txt", "Spam email blocked from " + currentEmail);
                         continue;
                     }
 
@@ -110,6 +139,8 @@ int main() {
                     recipient.getInbox().saveToFile(recipientLogFile);
 
                     cout << "Email sent to " << recipientEmail << ".\n";
+                    logAction("action_log.txt", "Email sent from " + currentEmail + " to " + recipientEmail);
+
                 } else {
                     cout << "Outbox is empty.\n";
                 }
@@ -119,8 +150,27 @@ int main() {
             } else if (choice == 4) {
                 // View outbox
                 currentUser->getOutbox().showAllEmails();
-            } else if (choice == 5) {
-                // Save user's inbox and outbox before logging out
+            }
+            // Uncomment the following block if you implement the search function
+            /*
+            else if (choice == 5) {
+                // Search inbox
+                string keyword;
+                cout << "Enter keyword to search in inbox: ";
+                getline(cin, keyword);
+                currentUser->getInbox().searchEmails(keyword);
+            } else if (choice == 6) {
+                // Log out
+                string inboxFile = currentEmail + "_InboxLog.txt";
+                string outboxFile = currentEmail + "_OutboxLog.txt";
+                currentUser->getInbox().saveToFile(inboxFile);
+                currentUser->getOutbox().saveToFile(outboxFile);
+
+                userManager.logout();
+            }
+            */
+            else if (choice == 5) {
+                // Log out
                 string inboxFile = currentEmail + "_InboxLog.txt";
                 string outboxFile = currentEmail + "_OutboxLog.txt";
                 currentUser->getInbox().saveToFile(inboxFile);

@@ -1,35 +1,34 @@
-#ifndef USER_MANAGER_H
-#define USER_MANAGER_H
+#ifndef USERMANAGER_H
+#define USERMANAGER_H
 
 #include "User.h"
 #include <string>
-#include <unordered_map>
+#include <map>
 
 class UserManager {
 public:
     UserManager();
 
-    // User registration
+    // Add a new user
     void addUser(const std::string& email, const std::string& password);
 
-    // User login
-    bool login(const std::string& email, const std::string& password);
+    // Log in a user
+    void login(const std::string& email, const std::string& password);
 
-    // User logout
+    // Log out the current user
     void logout();
 
     // Check if a user is logged in
     bool isLoggedIn() const;
 
-    // Get the currently logged-in user
-    User* getCurrentUser() const;
+    // Get the current user
+    User* getCurrentUser();
 
 private:
-    void loadUsersFromFile(); // Load users from "users.txt"
-    void saveUserToFile(const std::string& email, const std::string& password); // Save new user to "users.txt"
-
-    std::unordered_map<std::string, std::string> users; // Map of email and password
-    User* currentUser; // Currently logged-in user
+    std::map<std::string, std::string> users; // Map of email to password
+    User* currentUser;
+    void loadUsers();
+    void saveUsers();
 };
 
 #endif

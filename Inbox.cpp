@@ -53,6 +53,14 @@ void Inbox::showAllEmails() const {
     }
 }
 
+// Placeholder for search emails function
+void Inbox::searchEmails(const string& keyword) const {
+    // TODO: Implement the search functionality.
+    // Your team member can implement this function to search emails based on the keyword.
+    // For example, you can search in the subject, sender, or body of the emails.
+    cout << "Search functionality is not implemented yet.\n";
+}
+
 // Check if inbox is empty
 bool Inbox::isEmpty() const {
     return top == nullptr;

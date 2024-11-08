@@ -1,8 +1,13 @@
 #include "User.h"
 
+// Constructor
 User::User(const std::string& email) : email(email) {
-    inbox.loadFromFile(email + "_InboxLog.txt");
-    outbox.loadFromFile(email + "_OutboxLog.txt");
+    // Load inbox and outbox from files if needed
+}
+
+// Get user's email
+std::string User::getEmail() const {
+    return email;
 }
 
 // Get user's inbox
@@ -13,9 +18,4 @@ Inbox& User::getInbox() {
 // Get user's outbox
 Outbox& User::getOutbox() {
     return outbox;
-}
-
-// Get user's email
-std::string User::getEmail() const {
-    return email;
 }

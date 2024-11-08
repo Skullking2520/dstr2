@@ -9,17 +9,20 @@ public:
     Inbox();
     ~Inbox();
 
-    // Add email to inbox (push onto stack)
+    // Add email to inbox
     void addEmail(const Email& email);
 
-    // Get the latest email (pop from stack)
+    // Get the latest email
     Email getLatestEmail();
 
-    // Show the latest email without removing
+    // Show the latest email
     void showLatestEmail() const;
 
     // Show all emails in inbox
     void showAllEmails() const;
+
+    // Placeholder for search emails function
+    void searchEmails(const std::string& keyword) const; // Function to be implemented by your team member
 
     // Check if inbox is empty
     bool isEmpty() const;
@@ -30,6 +33,9 @@ public:
     // Save emails to file
     void saveToFile(const std::string& filename) const;
 
+    // Clear the inbox
+    void clear();
+
 private:
     struct Node {
         Email email;
@@ -37,10 +43,7 @@ private:
         Node(const Email& email) : email(email), next(nullptr) {}
     };
 
-    Node* top; // Top of the stack
-
-    // Helper function to clear the stack
-    void clear();
+    Node* top;
 };
 
 #endif
