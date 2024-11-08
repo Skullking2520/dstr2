@@ -4,7 +4,7 @@
 
 using namespace std;
 
-UserManager::UserManager() : currentUser(nullptr) {
+UserManager::UserManager() : currentUser(nullptr), userList(nullptr) {
     loadUsers();
 }
 
@@ -14,7 +14,11 @@ void UserManager::loadUsers() {
     if (file.is_open()) {
         string email, password;
         while (getline(file, email) && getline(file, password)) {
-            users[email] = password;
+            UserNode* newUser = new UserNode();
+            newUser->email = email;
+            newUser->password = password;
+            newUser->next = userList;
+            userList = newUser;
         }
         file.close();
     }
@@ -24,8 +28,10 @@ void UserManager::loadUsers() {
 void UserManager::saveUsers() {
     ofstream file("users.txt");
     if (file.is_open()) {
-        for (const auto& pair : users) {
-            file << pair.first << "\n" << pair.second << "\n";
+        UserNode* temp = userList;
+        while (temp != nullptr) {
+            file << temp->email << "\n" << temp->password << "\n";
+            temp = temp->next;
         }
         file.close();
     }
@@ -33,28 +39,45 @@ void UserManager::saveUsers() {
 
 // Add a new user
 void UserManager::addUser(const std::string& email, const std::string& password) {
-    if (users.find(email) != users.end()) {
-        cout << "User already exists.\n";
-        return;
+    // Check if user already exists
+    UserNode* temp = userList;
+    while (temp != nullptr) {
+        if (temp->email == email) {
+            cout << "User already exists.\n";
+            return;
+        }
+        temp = temp->next;
     }
+
+    // Validate email format
     if (!isValidEmailFormat(email)) {
         cout << "Invalid email format. Please enter a valid email.\n";
         return;
     }
-    users[email] = password;
+
+    // Add new user to the list
+    UserNode* newUser = new UserNode();
+    newUser->email = email;
+    newUser->password = password;
+    newUser->next = userList;
+    userList = newUser;
+
     saveUsers();
     cout << "User registered successfully.\n";
 }
 
 // Log in a user
 void UserManager::login(const std::string& email, const std::string& password) {
-    auto it = users.find(email);
-    if (it != users.end() && it->second == password) {
-        currentUser = new User(email);
-        cout << "Logged in successfully.\n";
-    } else {
-        cout << "Invalid email or password.\n";
+    UserNode* temp = userList;
+    while (temp != nullptr) {
+        if (temp->email == email && temp->password == password) {
+            currentUser = new User(email);
+            cout << "Logged in successfully.\n";
+            return;
+        }
+        temp = temp->next;
     }
+    cout << "Invalid email or password.\n";
 }
 
 // Log out the current user

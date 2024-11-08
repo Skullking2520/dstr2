@@ -3,7 +3,6 @@
 
 #include "User.h"
 #include <string>
-#include <map>
 
 class UserManager {
 public:
@@ -25,8 +24,15 @@ public:
     User* getCurrentUser();
 
 private:
-    std::map<std::string, std::string> users; // Map of email to password
+    struct UserNode {
+        std::string email;
+        std::string password;
+        UserNode* next;
+    };
+
+    UserNode* userList; // Linked list of users
     User* currentUser;
+
     void loadUsers();
     void saveUsers();
 };

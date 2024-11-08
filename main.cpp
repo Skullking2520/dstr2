@@ -1,9 +1,10 @@
 #include "UserManager.h"
 #include "EM.h"
-#include "filter.h" // Include the filter header
+#include "filter.h"
 #include <iostream>
 #include <fstream>
 #include <ctime>
+#include <cstring>
 
 using namespace std;
 
@@ -23,8 +24,6 @@ void displayUserMenu() {
     cout << "2. Send Next Email\n";
     cout << "3. View Inbox\n";
     cout << "4. View Outbox\n";
-    // Uncomment the following line if you implement the search function
-    // cout << "5. Search Inbox\n";
     cout << "5. Log Out\n";
     cout << "Choose an option: ";
 }
@@ -33,14 +32,15 @@ void displayUserMenu() {
 string getCurrentTimestamp() {
     time_t now = time(0);
     tm* localtm = localtime(&now);
-    char timestamp[80];
+    char timestamp[100];
+    // Modify the time format as per your team's requirements
     strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", localtm);
     return string(timestamp);
 }
 
 // Function to log actions to a log file
 void logAction(const string& filename, const string& action) {
-    ofstream file(filename, ios::app);
+    ofstream file(filename.c_str(), ios::app);
     if (file.is_open()) {
         file << "[" << getCurrentTimestamp() << "] " << action << "\n";
         file.close();
@@ -51,7 +51,7 @@ void logAction(const string& filename, const string& action) {
 
 // Function to log email to a file
 void logEmail(const string& filename, const Email& email) {
-    ofstream file(filename, ios::app);
+    ofstream file(filename.c_str(), ios::app);
     if (file.is_open()) {
         file << "Date: " << email.getDate() << "\n";
         file << "From: " << email.getSender() << "\n";
@@ -113,7 +113,7 @@ int main() {
                 if (!currentUser->getOutbox().isEmpty()) {
                     Email email = currentUser->getOutbox().sendEmail();
 
-                    // Spam filter check using separate filter file
+                    // Spam filter check using hardcoded spam words
                     bool isSpam = spamFilter(email);
 
                     if (isSpam) {
@@ -150,26 +150,7 @@ int main() {
             } else if (choice == 4) {
                 // View outbox
                 currentUser->getOutbox().showAllEmails();
-            }
-            // Uncomment the following block if you implement the search function
-            /*
-            else if (choice == 5) {
-                // Search inbox
-                string keyword;
-                cout << "Enter keyword to search in inbox: ";
-                getline(cin, keyword);
-                currentUser->getInbox().searchEmails(keyword);
-            } else if (choice == 6) {
-                // Log out
-                string inboxFile = currentEmail + "_InboxLog.txt";
-                string outboxFile = currentEmail + "_OutboxLog.txt";
-                currentUser->getInbox().saveToFile(inboxFile);
-                currentUser->getOutbox().saveToFile(outboxFile);
-
-                userManager.logout();
-            }
-            */
-            else if (choice == 5) {
+            } else if (choice == 5) {
                 // Log out
                 string inboxFile = currentEmail + "_InboxLog.txt";
                 string outboxFile = currentEmail + "_OutboxLog.txt";
