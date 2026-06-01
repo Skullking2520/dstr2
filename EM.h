@@ -3,27 +3,35 @@
 
 #include <string>
 
+// Email class definition
 class Email {
 public:
-    // creator
-    Email(const std::string& sender, const std::string& subject, const std::string& body, 
-          const std::string& date = "", int priority = 0);
+    // Constructor
+    Email(const std::string& sender = "", const std::string& recipient = "", const std::string& subject = "",
+          const std::string& body = "", const std::string& date = "");
 
-    // return every info
-    std::string getInfo() const;
+    // Getters
+    std::string getSender() const;
+    std::string getRecipient() const;
+    std::string getSubject() const;
+    std::string getBody() const;
+    std::string getDate() const;
 
-    // display email edtail
+    // Display email details
     void display() const;
 
 private:
-    std::string sender;    // sender
-    std::string subject;   // subject
-    std::string body;      // body
-    std::string date;      // date
-    int priority;          // priority
+    std::string sender;    // Sender's email
+    std::string recipient; // Recipient's email
+    std::string subject;   // Email subject
+    std::string body;      // Email body
+    std::string date;      // Date of email
 };
 
-// createEmail
-Email createEmail();
+// Function to create an email
+Email createEmail(const std::string& sender);
+
+// Function to validate email format
+bool isValidEmailFormat(const std::string& email);
 
 #endif

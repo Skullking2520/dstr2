@@ -1,152 +1,166 @@
+#include "UserManager.h"
 #include "EM.h"
-#include "Inbox.h"
-#include "Outbox.h"
-#include "EL.h"
+#include "filter.h"
 #include <iostream>
+#include <fstream>
+#include <ctime>
+#include <cstring>
 
 using namespace std;
 
-void displayMenu()
-{
+// Function to display the main menu
+void displayMainMenu() {
     cout << "\n==== Email Management System ====\n";
-    cout << "1. Create Email\n";
-    cout << "2. Add Email to Inbox/Outbox\n";
-    cout << "3. View Latest Email in Inbox\n";
-    cout << "4. Remove Latest Email from Inbox\n";
-    cout << "5. View Next Email in Outbox\n";
-    cout << "6. Send Next Email in Outbox\n";
-    cout << "7. Exit\n";
+    cout << "1. Sign Up\n";
+    cout << "2. Log In\n";
+    cout << "3. Exit\n";
     cout << "Choose an option: ";
 }
 
-void email_list()
-{
-    cout << "\n==== Email List ====\n";
-    cout << "1. View Email List\n";
-    cout << "2. Add Email to Inbox\n";
-    cout << "3. Add Email to Outbox\n";
-    cout << "4. Back to Main Menu\n";
+// Function to display the user menu
+void displayUserMenu() {
+    cout << "\n==== User Menu ====\n";
+    cout << "1. Write Email\n";
+    cout << "2. Send Next Email\n";
+    cout << "3. View Inbox\n";
+    cout << "4. View Outbox\n";
+    cout << "5. Log Out\n";
     cout << "Choose an option: ";
 }
 
-int main()
-{
-    Inbox inbox;
-    Outbox outbox;
+// Function to get the current timestamp
+string getCurrentTimestamp() {
+    time_t now = time(0);
+    tm* localtm = localtime(&now);
+    char timestamp[100];
+    // Modify the time format as per your team's requirements
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", localtm);
+    return string(timestamp);
+}
+
+// Function to log actions to a log file
+void logAction(const string& filename, const string& action) {
+    ofstream file(filename.c_str(), ios::app);
+    if (file.is_open()) {
+        file << "[" << getCurrentTimestamp() << "] " << action << "\n";
+        file.close();
+    } else {
+        cerr << "Error: Unable to open log file.\n";
+    }
+}
+
+// Function to log email to a file
+void logEmail(const string& filename, const Email& email) {
+    ofstream file(filename.c_str(), ios::app);
+    if (file.is_open()) {
+        file << "Date: " << email.getDate() << "\n";
+        file << "From: " << email.getSender() << "\n";
+        file << "To: " << email.getRecipient() << "\n";
+        file << "Subject: " << email.getSubject() << "\n";
+        file << "Body: " << email.getBody() << "\n";
+        file << "--------------------------\n";
+        file.close();
+    } else {
+        cerr << "Error: Unable to open email log file.\n";
+    }
+}
+
+int main() {
+    UserManager userManager;
     int choice;
-    EmailList emailList;
 
-    while (true)
-    {
-        displayMenu();
-        cin >> choice;
-        cin.ignore(); // clear entry buffer
+    while (true) {
+        if (!userManager.isLoggedIn()) {
+            displayMainMenu();
+            cin >> choice;
+            cin.ignore();
 
-        if (choice == 1)
-        {
-            Email email = createEmail();
-            emailList.addEmail(email);
-        }
-        else if (choice == 2)
-        {
-            int choice1;
-            while (true)
-            {
-                email_list();
-                cin >> choice1;
-                cin.ignore();
-                if (choice1 == 1)
-                {
-                    emailList.displayEmails();
-                }
-                else if (choice1 == 2)
-                {
-                    cout << "\nWhich Email do you like to add to Inbox?\n";
-                    int choice2;
-                    cin >> choice2;
-                    cin.ignore();
-                    if (emailList.isThere(choice2)==true)
-                    {
-                        Email email = emailList.getEmailAt(choice2);
-                        emailList.removeEmailAt(choice2);
-                        inbox.addEmail(email);
-                        cout << "\nEmail added Successfully!\n";
+            if (choice == 1) {
+                string email, password;
+                cout << "Enter email: ";
+                getline(cin, email);
+                cout << "Enter password: ";
+                getline(cin, password);
+                userManager.addUser(email, password);
+            } else if (choice == 2) {
+                string email, password;
+                cout << "Enter email: ";
+                getline(cin, email);
+                cout << "Enter password: ";
+                getline(cin, password);
+                userManager.login(email, password);
+            } else if (choice == 3) {
+                cout << "Exiting Email Management System. Goodbye!\n";
+                break;
+            } else {
+                cout << "Invalid option. Please try again.\n";
+            }
+        } else {
+            displayUserMenu();
+            cin >> choice;
+            cin.ignore();
+
+            User* currentUser = userManager.getCurrentUser();
+            string currentEmail = currentUser->getEmail();
+
+            if (choice == 1) {
+                // Write email and add to outbox
+                Email email = createEmail(currentEmail);
+                currentUser->getOutbox().addEmail(email);
+                logAction("action_log.txt", "Email drafted by " + currentEmail);
+            } else if (choice == 2) {
+                // Send next email in outbox
+                if (!currentUser->getOutbox().isEmpty()) {
+                    Email email = currentUser->getOutbox().sendEmail();
+
+                    // Spam filter check using hardcoded spam words
+                    bool isSpam = spamFilter(email);
+
+                    if (isSpam) {
+                        // Email is spam; do not send
+                        cout << "Email detected as spam and will not be sent.\n";
+                        logAction("action_log.txt", "Spam email blocked from " + currentEmail);
+                        continue;
                     }
-                    else
-                    {
-                        cout << "\nNo Email existing in the index\n";
-                    }
+
+                    // Log to sender's outbox log
+                    string senderLogFile = currentEmail + "_OutboxLog.txt";
+                    logEmail(senderLogFile, email);
+                    currentUser->getOutbox().saveToFile(senderLogFile);
+
+                    // Add email to recipient's inbox
+                    string recipientEmail = email.getRecipient();
+                    User recipient(recipientEmail);
+                    recipient.getInbox().addEmail(email);
+
+                    // Log to recipient's inbox log
+                    string recipientLogFile = recipientEmail + "_InboxLog.txt";
+                    logEmail(recipientLogFile, email);
+                    recipient.getInbox().saveToFile(recipientLogFile);
+
+                    cout << "Email sent to " << recipientEmail << ".\n";
+                    logAction("action_log.txt", "Email sent from " + currentEmail + " to " + recipientEmail);
+
+                } else {
+                    cout << "Outbox is empty.\n";
                 }
-                else if (choice1 == 3)
-                {
-                    cout << "\nWhich Email do you like to add to Outbox?\n";
-                    int choice2;
-                    cin >> choice2;
-                    cin.ignore();
-                    if (emailList.isThere(choice2)==true)
-                    {
-                        Email email = emailList.getEmailAt(choice2);
-                        emailList.removeEmailAt(choice2);
-                        outbox.addEmail(email);
-                        cout << "\nEmail added Successfully!\n";
-                    }
-                    else
-                    {
-                        cout << "\nNo Email existing in the index\n";
-                    }
-                }
-                else if (choice1 == 4)
-                {
-                    break;
-                }
-                else
-                {
-                    cout << "Invalid option. Please try again.\n";
-                }
+            } else if (choice == 3) {
+                // View inbox
+                currentUser->getInbox().showAllEmails();
+            } else if (choice == 4) {
+                // View outbox
+                currentUser->getOutbox().showAllEmails();
+            } else if (choice == 5) {
+                // Log out
+                string inboxFile = currentEmail + "_InboxLog.txt";
+                string outboxFile = currentEmail + "_OutboxLog.txt";
+                currentUser->getInbox().saveToFile(inboxFile);
+                currentUser->getOutbox().saveToFile(outboxFile);
+
+                userManager.logout();
+            } else {
+                cout << "Invalid option. Please try again.\n";
             }
-        }
-        else if (choice == 3)
-        {
-            inbox.showLatestEmail();
-        }
-        else if (choice == 4)
-        {
-            if (!inbox.isEmpty())
-            {
-                Email latest = inbox.getLatestEmail();
-                cout << "\nRemoved email:\n"
-                     << latest.getInfo() << endl;
-            }
-            else
-            {
-                cout << "Inbox is empty.\n";
-            }
-        }
-        else if (choice == 5)
-        {
-            outbox.showNextEmail();
-        }
-        else if (choice == 6)
-        {
-            if (!outbox.isEmpty())
-            {
-                Email sent = outbox.sendEmail();
-                cout << "\nSent email:\n"
-                     << sent.getInfo() << endl;
-            }
-            else
-            {
-                cout << "Outbox is empty.\n";
-            }
-        }
-        else if (choice == 7)
-        {
-            cout << "Exiting Email Management System. Goodbye!\n";
-            break;
-        }
-        else
-        {
-            cout << "Invalid option. Please try again.\n";
         }
     }
 
